@@ -1,0 +1,30 @@
+{
+  "name": "i18nshell",
+  "version": "0.0.0-beta.1",
+  "description": "Tiny i18n shell",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup --config"
+  },
+  "keywords": [
+    "i18n",
+    "async i18n",
+    "locale generate"
+  ],
+  "author": "CJY0208",
+  "license": "ISC",
+  "homepage": "https://github.com/CJY0208/i18nshell",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CJY0208/i18nshell.git"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "rollup": "^1.11.3",
+    "rollup-plugin-babel": "^4.3.2",
+    "rollup-plugin-node-resolve": "^4.2.3",
+    "rollup-plugin-uglify": "^6.0.2"
+  }
+}
