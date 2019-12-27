@@ -24,7 +24,8 @@ export default [
     output: {
       file: 'lib/i18nshell.js',
       format: 'cjs',
-      exports: 'named'
+      exports: 'named',
+      sourcemap: true
     },
     plugins: [
       resolve(),

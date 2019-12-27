@@ -22,7 +22,7 @@ export const isString = val => isType(val, 'string')
 
 export const isPromiseLike = val => !!val && isFunction(val.then)
 
-export const isNaN = val => val !== val
+export const isNaN = val => val !== val // eslint-disable-line
 
 export const isNumber = val => isType(val, 'number') && !isNaN(val)
 // 值类型判断 -------------------------------------------------------------
