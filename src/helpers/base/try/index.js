@@ -1,10 +1,16 @@
 import { isString, isUndefined, isFunction, isNumber } from '../is'
 
-export const value = (...values) =>
-  values.reduce(
+const toArr = [].slice.call
+const dotSplit = val => val.split('.')
+const REDUCE = 'reduce'
+
+export const value = function() {
+  const values = toArr(arguments)
+  return values[REDUCE](
     (value, nextValue) => (isUndefined(value) ? nextValue : value),
     undefined
   )
+}
 
 export const get = (obj, keys, defaultValue) => {
   keys = value(keys, [])
@@ -12,7 +18,7 @@ export const get = (obj, keys, defaultValue) => {
     if (isNumber(keys)) {
       keys = String(keys)
     }
-    let result = (isString(keys) ? keys.split('.') : keys).reduce(
+    let result = (isString(keys) ? dotSplit(keys) : keys)[REDUCE](
       (res, key) => res[key],
       obj
     )
@@ -22,12 +28,15 @@ export const get = (obj, keys, defaultValue) => {
   }
 }
 
-export const run = (obj, keys, ...args) => {
-  keys = value(keys, [])
-  keys = keys = isString(keys) ? keys.split('.') : keys
+export const run = function() {
+  const args = arguments
+  let obj = args[0]
+  let keys = get(args[1], [])
+  const rest = toArr(args, 2)
+  keys = isString(keys) ? dotSplit(keys) : keys
 
   const func = get(obj, keys)
   const context = get(obj, keys.slice(0, -1))
 
-  return isFunction(func) ? func.call(context, ...args) : func
+  return isFunction(func) ? func.apply(context, rest) : func
 }

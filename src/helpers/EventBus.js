@@ -1,45 +1,50 @@
 import { isFunction, isUndefined } from './base/is'
-import { value } from './base/try'
+import { value, get } from './base/try'
 
-const KEY_LISTENERS = '_listeners'
-const KEY_GET_EVENT_MAP = '_getEventMap'
+const LISTENERS = '_listeners'
+const GET_EVENT_MAP = '_getEventMap'
+const ON = 'on'
+const ONCE = 'once'
+const OFF = 'off'
+const APPLY = 'apply'
 
 export default class EventBus {
-  [KEY_LISTENERS] = {};
-  [KEY_GET_EVENT_MAP] = event => {
-    if (!this[KEY_LISTENERS][event]) {
-      this[KEY_LISTENERS][event] = new Map()
+  [LISTENERS] = {};
+  [GET_EVENT_MAP] = event => {
+    if (!this[LISTENERS][event]) {
+      this[LISTENERS][event] = new Map()
     }
 
-    return this[KEY_LISTENERS][event]
-  }
-
-  on = (event, listener, config) => {
-    let once = get(config, 'once', false)
+    return this[LISTENERS][event]
+  };
+  [ON] = (event, listener, config) => {
+    const self = this
+    let once = get(config, ONCE, false)
     if (!isFunction(listener)) {
-      return
+      return self
     }
-
-    this[KEY_GET_EVENT_MAP](event).set(
+    self[GET_EVENT_MAP](event).set(
       listener,
       once
-        ? (...args) => {
-            listener(...args)
-            this.off(event, listener)
+        ? function() {
+            listener[APPLY](undefined, arguments)
+            self[OFF](event, listener)
           }
         : listener
     )
 
-    return this
-  }
-
-  once = (event, listener, config) => {
+    return self
+  };
+  [ONCE] = (event, listener, config) => {
     config = value(config, {})
-    return this.on(event, listener, { ...config, once: true })
-  }
-
-  off = (event, listener) => {
-    const eventMap = this[KEY_GET_EVENT_MAP](event)
+    return this[ON](
+      event,
+      listener,
+      Object.assign({}, config, { [ONCE]: true })
+    )
+  };
+  [OFF] = (event, listener) => {
+    const eventMap = this[GET_EVENT_MAP](event)
 
     if (isUndefined(listener)) {
       eventMap.clear()
@@ -50,6 +55,12 @@ export default class EventBus {
     return this
   }
 
-  emit = (event, ...args) =>
-    this[KEY_GET_EVENT_MAP](event).forEach(listener => listener(...args))
+  emit = function() {
+    const args = arguments
+    const event = args[0]
+    const rest = [].slice.call(args, 1)
+    return this[GET_EVENT_MAP](event).forEach(listener =>
+      listener[APPLY](undefined, rest)
+    )
+  }.bind(this)
 }

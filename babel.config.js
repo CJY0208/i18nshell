@@ -3,7 +3,8 @@ module.exports = {
     [
       '@babel/env',
       {
-        modules: false
+        modules: false,
+        exclude: [/typeof/]
       }
     ]
   ],

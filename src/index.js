@@ -14,20 +14,33 @@ const NSReg = /:/
 const TmpMarkReg = /\{\{\s*\w*\s*\}\}/g
 const TmpMarkLeftReg = /\{\{\s*/
 const TmpMarkRightReg = /\s*\}\}/
-const KEY_LNG = 'lng'
-const KEY_APPLY_LNG = 'applyLng'
-const KEY_RESOURCES = 'resources'
-const KEY_EVENT_BUS = 'eventBus'
-const KEY_SPLIT = 'split'
-const KEY_INSTANCES = 'instances'
-const KEY_DEFAULT = 'default'
-const KEY_CHANGE = 'change'
-const KEY_REPLACE = 'replace'
+const resolvedPromise = Promise.resolve()
+const PromiseAll = Promise.all
+const extend = Object.assign
 
-export default class I18n {
-  static [KEY_INSTANCES] = []
-  static [KEY_LNG] = undefined
-  static [KEY_EVENT_BUS] = new EventBus()
+const LNG = 'lng'
+const APPLY_LNG = 'applyLng'
+const RESOURCES = 'resources'
+const EVENT_BUS = 'eventBus'
+const SPLIT = 'split'
+const INSTANCES = 'instances'
+const DEFAULT = 'default'
+const CHANGE = 'change'
+const REPLACE = 'replace'
+const THEN = 'then'
+const TEMPLATE = 'template'
+const CONFIG = 'config'
+const TYPES = 'types'
+const MAP = 'map'
+const EMIT = 'emit'
+const T = 't'
+const TYPE_SEPARATOR = '@'
+const CONCAT = 'concat'
+
+export default class I {
+  static [INSTANCES] = []
+  static [LNG] = undefined
+  static [EVENT_BUS] = new EventBus()
   /**
    * [template 简易字符串模板函数]
    * e.g: template('hello {{name}}', { name: 'CJY' }) ==> 'hello CJY'
@@ -35,113 +48,115 @@ export default class I18n {
    * @param  {[type]} data [description]
    * @return {[type]}      [description]
    */
-  static template = (str, data) => {
+  static [TEMPLATE] = (str, data) => {
     str = value(str, '')
     const keys = str.match(TmpMarkReg) || {}
 
     Object.keys(keys).forEach(_k => {
-      const key = keys[_k][KEY_REPLACE](TmpMarkLeftReg, '')[KEY_REPLACE](
+      const key = keys[_k][REPLACE](TmpMarkLeftReg, '')[REPLACE](
         TmpMarkRightReg,
         ''
       )
-      str = str[KEY_REPLACE](
-        new RegExp(`\\{\\{${key}\\}\\}`, 'g'),
+      str = str[REPLACE](
+        new RegExp('\\{\\{' + key + '\\}\\}', 'g'),
         get(data, key)
       )
     })
 
     return str
   }
-  static load = (...loaders) =>
-    memoize(() =>
-      Promise.all(
-        loaders.map(loader => {
+  static load = function() {
+    const loaders = [].slice.call(arguments)
+    return memoize(() =>
+      PromiseAll(
+        loaders[MAP](loader => {
           const res = run(loader)
-          const getValue = res => get(res, KEY_DEFAULT, res)
+          const getValue = res => get(res, DEFAULT, res)
 
-          return isPromiseLike(res) ? res.then(getValue) : getValue(res)
+          return isPromiseLike(res) ? res[THEN](getValue) : getValue(res)
         })
-      ).then(res => Object.assign({}, ...res))
+      )[THEN](res => extend.apply(null, [{}][CONCAT](res)))
     )
-  static [KEY_APPLY_LNG] = lng =>
+  }
+  static [APPLY_LNG] = lng =>
     lng
-      ? Promise.all(
-          I18n[KEY_INSTANCES].map(instance => instance[KEY_APPLY_LNG](lng))
-        ).then(() => {
-          I18n[KEY_LNG] = lng
-          I18n[KEY_EVENT_BUS].emit(KEY_CHANGE, lng)
+      ? PromiseAll(I[INSTANCES][MAP](instance => instance[APPLY_LNG](lng)))[
+          THEN
+        ](() => {
+          I[LNG] = lng
+          I[EVENT_BUS][EMIT](CHANGE, lng)
         })
-      : Promise.resolve();
-  [KEY_RESOURCES] = {};
-  [KEY_LNG] = undefined;
-  [KEY_EVENT_BUS] = new EventBus()
+      : resolvedPromise;
+  [RESOURCES] = {};
+  [LNG] = undefined;
+  [EVENT_BUS] = new EventBus()
 
   constructor(config) {
-    this.config = value(config, {})
+    this[CONFIG] = value(config, {})
 
-    I18n[KEY_INSTANCES].push(this)
-    const applyLng = this[KEY_APPLY_LNG]
-    if (I18n[KEY_LNG]) {
-      applyLng(I18n[KEY_LNG])
+    I[INSTANCES].push(this)
+    const applyLng = this[APPLY_LNG]
+    if (I[LNG]) {
+      applyLng(I[LNG])
     } else {
-      I18n[KEY_EVENT_BUS].once(KEY_CHANGE, applyLng)
+      I[EVENT_BUS].once(CHANGE, applyLng)
     }
   }
 
-  [KEY_APPLY_LNG] = lng =>
+  [APPLY_LNG] = lng =>
     lng
-      ? Promise.all(
-          Object.entries(this.config.types).map(([type, { resources }]) => {
-            if (!this[KEY_RESOURCES][type]) {
-              this[KEY_RESOURCES][type] = {}
+      ? PromiseAll(
+          Object.entries(this[CONFIG][TYPES])[MAP](entries => {
+            const type = entries[0]
+            const { [RESOURCES]: resources } = entries[1]
+            if (!this[RESOURCES][type]) {
+              this[RESOURCES][type] = {}
             }
             const res = run(get(resources, lng, resources))
             const applyRes = res => {
-              this[KEY_RESOURCES][type][lng] = res
+              this[RESOURCES][type][lng] = res
             }
 
-            return isPromiseLike(res) ? res.then(applyRes) : applyRes(res)
+            return isPromiseLike(res) ? res[THEN](applyRes) : applyRes(res)
           })
-        ).then(() => {
-          this[KEY_LNG] = lng
-          this[KEY_EVENT_BUS].emit(KEY_CHANGE, lng)
+        )[THEN](() => {
+          this[LNG] = lng
+          this[EVENT_BUS][EMIT](CHANGE, lng)
         })
-      : Promise.resolve()
-
-  t = (str, options) => {
+      : resolvedPromise;
+  [T] = (str, options) => {
     options = value(options, {})
     const useNamespace = NSReg.test(str)
-    const { config } = this
-    const { defaultType = KEY_DEFAULT } = config
-    const [_keys, type = defaultType] = str[KEY_SPLIT]('@')
+    const { [CONFIG]: config, [LNG]: lng } = this
+    const { defaultType = DEFAULT } = config
+    const splitRes = str[SPLIT](TYPE_SEPARATOR)
+    const _keys = splitRes[0]
+    const type = value(splitRes[1], defaultType)
 
     let keys = _keys
     let namespace
 
     if (useNamespace) {
-      ;[namespace, keys] = _keys[KEY_SPLIT](':')
+      const splitRes = _keys[SPLIT](':')
+      namespace = splitRes[0]
+      keys = splitRes[1]
     }
 
-    if (!useNamespace && this[KEY_LNG]) {
-      const formatKeyMap = ['types', type, 'format']
+    if (!useNamespace && lng) {
+      const formatKeyMap = [TYPES, type, 'format']
       const format = get(
         config,
-        [...formatKeyMap, this[KEY_LNG]],
-        get(config, formatKeyMap, I18n.template)
+        formatKeyMap[CONCAT](lng),
+        get(config, formatKeyMap, I[TEMPLATE])
       )
-      const useResource =
-        get(this[KEY_RESOURCES], [type, this[KEY_LNG]]) !== false
+      const useResource = !isObject(get(this[RESOURCES], [type, lng]))
 
       if (isFunction(format)) {
         const res = run(
           format,
           undefined,
           useResource
-            ? get(this[KEY_RESOURCES], [
-                type,
-                this[KEY_LNG],
-                ...keys[KEY_SPLIT]('.')
-              ])
+            ? get(this[RESOURCES], [type, this[LNG]][CONCAT](keys[SPLIT]('.')))
             : keys,
           options
         )
@@ -152,29 +167,26 @@ export default class I18n {
       }
     }
 
-    return this.fT(keys + '@' + type, options, namespace) || keys
+    return this.fT(keys + TYPE_SEPARATOR + type, options, namespace) || keys
   }
 
   fT = (str, options, namespace) => {
-    const { fallback } = this.config
+    const { fallback } = this[CONFIG]
     if (!isArray(fallback) && !isObject(fallback)) {
       return undefined
     }
 
-    const fallbackOptions = {
-      ...options,
-      _fbT: true
-    }
+    const fallbackOptions = extend({ _fbT: true }, options)
 
     if (namespace) {
-      const res = run(fallback, [namespace, 't'], str, fallbackOptions)
+      const res = run(fallback, [namespace, T], str, fallbackOptions)
 
       if (res) {
         return res
       }
     } else {
-      for (let i18n of Object.values(fallback)) {
-        let res = i18n.t(str, fallbackOptions)
+      for (let I of Object.values(fallback)) {
+        let res = run(I, T, str, fallbackOptions)
 
         if (res) {
           return res
