@@ -1,20 +1,18 @@
 import {
   get,
   run,
-  value,
   isArray,
   isObject,
   isFunction,
   isPromiseLike,
   memoize,
+  defaultVal,
+  template,
   EventBus
 } from './helpers'
 
 const P = Promise
 const NSReg = /:/
-const TmpMarkReg = /\{\{\s*\w*\s*\}\}/g
-const TmpMarkLeftReg = /\{\{\s*/
-const TmpMarkRightReg = /\s*\}\}/
 const resolvedPromise = P.resolve()
 const PromiseAll = P.all.bind(P)
 const extend = Object.assign
@@ -27,7 +25,6 @@ const SPLIT = 'split'
 const INSTANCES = 'instances'
 const DEFAULT = 'default'
 const CHANGE = 'change'
-const REPLACE = 'replace'
 const THEN = 'then'
 const TEMPLATE = 'template'
 const CONFIG = 'config'
@@ -45,7 +42,7 @@ const I18n = extend(
     [EVENT_BUS] = new EventBus()
 
     constructor(config) {
-      this[CONFIG] = value(config, {})
+      this[CONFIG] = defaultVal(config, {})
 
       I18n[INSTANCES].push(this)
       const lng = I18n[LNG]
@@ -79,13 +76,13 @@ const I18n = extend(
           })
         : resolvedPromise;
     [T] = (str, options) => {
-      options = value(options, {})
+      options = defaultVal(options, {})
       const useNamespace = NSReg.test(str)
       const { [CONFIG]: config, [LNG]: lng } = this
       const { defaultType = DEFAULT } = config
       const splitRes = str[SPLIT](TYPE_SEPARATOR)
       const _keys = splitRes[0]
-      const type = value(splitRes[1], defaultType)
+      const type = defaultVal(splitRes[1], defaultType)
 
       let keys = _keys
       let namespace
@@ -106,20 +103,16 @@ const I18n = extend(
         const useResource = isObject(get(this[RESOURCES], [type, lng]))
 
         if (isFunction(format)) {
-          const res = run(
-            format,
-            undefined,
-            useResource
-              ? get(
-                  this[RESOURCES],
-                  [type, this[LNG]][CONCAT](keys[SPLIT]('.'))
-                )
-              : keys,
-            options
-          )
+          const resource = useResource
+            ? get(this[RESOURCES], [type, this[LNG]][CONCAT](keys[SPLIT]('.')))
+            : keys
 
-          if (res) {
-            return res
+          if (resource) {
+            const res = run(format, undefined, resource, options)
+
+            if (res) {
+              return res
+            }
           }
         }
       }
@@ -167,23 +160,7 @@ const I18n = extend(
      * @param  {[type]} data [description]
      * @return {[type]}      [description]
      */
-    [TEMPLATE]: (str, data) => {
-      str = value(str, '')
-      const keys = str.match(TmpMarkReg) || {}
-
-      Object.keys(keys).forEach(_k => {
-        const key = keys[_k][REPLACE](TmpMarkLeftReg, '')[REPLACE](
-          TmpMarkRightReg,
-          ''
-        )
-        str = str[REPLACE](
-          new RegExp('\\{\\{' + key + '\\}\\}', 'g'),
-          get(data, key)
-        )
-      })
-
-      return str
-    },
+    [TEMPLATE]: template,
     load: function() {
       const loaders = [].slice.call(arguments)
       return memoize(() =>
