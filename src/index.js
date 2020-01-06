@@ -107,12 +107,10 @@ const I18n = extend(
             ? get(this[RESOURCES], [type, this[LNG]][CONCAT](keys[SPLIT]('.')))
             : keys
 
-          if (resource) {
-            const res = run(format, undefined, resource, options)
+          const res = run(format, undefined, resource, options, lng)
 
-            if (res) {
-              return res
-            }
+          if (res) {
+            return res
           }
         }
       }
