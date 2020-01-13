@@ -107,7 +107,15 @@ const I18n = extend(
             ? get(this[RESOURCES], [type, this[LNG]][CONCAT](keys[SPLIT]('.')))
             : keys
 
-          const res = run(format, undefined, resource, options, lng)
+          const isCustomizedFormat = format !== template
+
+          const res = run(
+            format,
+            undefined,
+            resource,
+            options,
+            isCustomizedFormat ? lng : undefined
+          )
 
           if (res) {
             return res
