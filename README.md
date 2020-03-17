@@ -54,7 +54,7 @@ async function test() {
 ```
 
 ---
-# Increase internationalization types such as currency, time, etc.
+# Add customized i18n types such as currency, time, etc.
 
 `i18nshell` has simple text translation built in
 
@@ -116,7 +116,7 @@ async function test() {
 ```
 
 ---
-# Load resources on demand
+# Lazyload resources
 
 The following settings work with the `import (...)` syntax, en language packs are only loaded when needed
 
