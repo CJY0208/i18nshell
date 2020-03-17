@@ -1,5 +1,8 @@
 # I18nshell
 
+[![size](https://img.shields.io/bundlephobia/minzip/i18nshell.svg)](https://github.com/CJY0208/i18nshell)
+[![dm](https://img.shields.io/npm/dm/i18nshell.svg)](https://github.com/CJY0208/i18nshell)
+
 Tiny i18n shell
 
 English | [中文说明](./README_CN.md)
