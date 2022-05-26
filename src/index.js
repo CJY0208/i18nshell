@@ -192,4 +192,5 @@ const I18n = extend(
   }
 )
 
+export { I18n }
 export default I18n

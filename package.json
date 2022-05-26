@@ -3,9 +3,18 @@
   "version": "0.0.0-beta.7",
   "description": "Tiny i18n shell",
   "main": "index.js",
+  "modules": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "build": "rollup --config"
   },
+  "files": [
+    "lib",
+    "index.js",
+    "index.d.ts",
+    "package.json",
+    "README.md"
+  ],
   "keywords": [
     "i18n",
     "async i18n",
