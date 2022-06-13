@@ -1,6 +1,6 @@
 {
   "name": "i18nshell",
-  "version": "0.0.0-beta.8",
+  "version": "0.0.0-beta.9",
   "description": "Tiny i18n shell",
   "main": "index.js",
   "modules": "index.js",

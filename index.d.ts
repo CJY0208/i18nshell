@@ -30,8 +30,8 @@ export class I18n {
     config: I18nConfig;
     constructor(config: I18nConfig);
     applyLng: (lng: string) => Promise<void>;
-    fT: (str: any, options: any, namespace: any) => any;
-    t: (str: any, options?: {}) => any;
+    fT: (str: string, options: any, namespace: any) => any;
+    t: (str: string, options?: {}) => any;
 }
 
 export default I18n

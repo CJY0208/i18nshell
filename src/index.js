@@ -4,6 +4,7 @@ import {
   isArray,
   isObject,
   isFunction,
+  isString,
   isPromiseLike,
   memoize,
   defaultVal,
@@ -76,6 +77,9 @@ const I18n = extend(
           })
         : resolvedPromise;
     [T] = (str, options) => {
+      if (!isString(str)) {
+        return ''
+      }
       options = defaultVal(options, {})
       const useNamespace = NSReg.test(str)
       const { [CONFIG]: config, [LNG]: lng } = this
@@ -127,6 +131,9 @@ const I18n = extend(
     }
 
     fT = (str, options, namespace) => {
+      if (!isString(str)) {
+        return ''
+      }
       const { fallback } = this[CONFIG]
       if (!isArray(fallback) && !isObject(fallback)) {
         return undefined
